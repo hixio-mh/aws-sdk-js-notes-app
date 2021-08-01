@@ -13,37 +13,28 @@ const RecordAudioButton = (props: {
   setIsRecording: Function;
   setNoteContent: Function;
 }) => {
+  const micStream = new MicrophoneStream();
   const { disabled, isRecording, setIsRecording, setNoteContent } = props;
-  const [micStream, setMicStream] = useState<MicrophoneStream | undefined>();
   const [errorMsg, setErrorMsg] = useState("");
 
   const toggleTrascription = async () => {
     if (isRecording) {
       setIsRecording(false);
-      if (micStream) {
-        micStream.stop();
-        setMicStream(undefined);
-      }
+      micStream.stop();
     } else {
       setIsRecording(true);
-      let mic;
       try {
         const audio = await navigator.mediaDevices.getUserMedia({
           audio: true,
           video: false,
         });
-        mic = new MicrophoneStream();
-        mic.setStream(audio);
-        setMicStream(mic);
-        await streamAudioToWebSocket(mic);
+        micStream.setStream(audio);
+        await streamAudioToWebSocket(micStream);
       } catch (error) {
         console.log(error);
         setErrorMsg(`${error.toString()}`);
       } finally {
-        if (mic) {
-          mic.stop();
-          setMicStream(undefined);
-        }
+        micStream.stop();
         setIsRecording(false);
       }
     }
